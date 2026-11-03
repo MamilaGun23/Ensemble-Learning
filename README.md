@@ -1,108 +1,116 @@
-# LAB-7
-A comprehensive implementation of ensemble learning methods including majority voting, bagging, and AdaBoost. Demonstrates how combining multiple models achieves superior predictive performance compared to individual classifiers.
+# Ensemble learning lab
 
-# Ensemble Learning Lab: Combining Models for Improved Performance
+[LAB 7.ipynb](LAB%207.ipynb) compares a custom majority-vote classifier, base
+classifiers, bagging and AdaBoost. Results below are from actual execution;
+they do not show that ensembles consistently outperform individual models.
 
-## Overview
-This lab explores ensemble learning methods that combine multiple models to achieve better predictive performance than individual models, based on concepts from Chapter 7 of *Python Machine Learning*. The implementation includes majority voting classifiers, bagging with decision trees, and AdaBoost for boosting weak learners using the Iris and Wine datasets.
+## Reproduce (Python 3.12)
 
-## Lab Structure
+```sh
+git clone https://github.com/MamilaGun23/Ensemble-Learning.git
+cd Ensemble-Learning
+python -m venv .venv
+```
 
-### Implementation Features
-- **Majority Voting Classifier** - Custom implementation from scratch
-- **Bagging** - Bootstrap aggregating with decision trees
-- **AdaBoost** - Adaptive boosting with decision stumps
-- **Model Comparison** - Comprehensive evaluation across methods
-- **Hyperparameter Tuning** - GridSearch optimization
-- **Visualizations** - Decision boundaries and error convergence plots
+Activate with `.venv/Scripts/Activate.ps1` on PowerShell or
+`source .venv/bin/activate` on macOS/Linux, then:
 
-## Analysis Questions & Answers
+```sh
+python -m pip install -r requirements-dev.txt
+python -m pytest -q
+python -m ruff check majority_vote.py tests
+python -m nbconvert --to notebook --execute --inplace --ExecutePreprocessor.timeout=600 "LAB 7.ipynb"
+```
 
-### Majority Voting vs Individual Classifiers
+Interactive alternative: `python -m notebook "LAB 7.ipynb"`.
+Wine and Iris use packaged scikit-learn datasets, so tests and all notebook cells
+need no dataset downloads or credentials. [results.json](results.json) records
+the separate experiments. Requirements are pinned to the tested environment.
 
-**Performance Comparison:**
-The majority voting classifier consistently outperformed individual classifiers, achieving approximately 0.95 ROC AUC compared to 0.92 for Logistic Regression, 0.87 for Decision Tree, and 0.85 for KNN.
+## Experiments and boundaries
 
-**Why Ensembles Excel:**
-Ensemble methods reduce individual model errors through collective decision making, leverage diverse models that capture different patterns in the data, and benefit from statistical principles that show ensemble error decreases with more classifiers.
+| Experiment | Features and classes | Stratified split (seed 1) | Training CV | Metric |
+|---|---|---|---|---|
+| Full Iris illustration | First two features, three species | 105 train / 45 test | No CV for this illustration | Single held-out accuracy; full-data plot is exploratory |
+| Binary Iris | Sepal width and petal length; versicolor/virginica | 70 train / 30 test | Same ten shuffled folds for all four methods | ROC-AUC |
+| Binary Wine | Alcohol and OD280/OD315; original classes 2/3 | 95 train / 24 test | Same five shuffled folds for fixed methods | Accuracy |
+| Full Iris comparison | All four features, three species | 105 train / 45 test | Same ten shuffled folds | Accuracy |
 
-**When Ensembles Underperform:**
-Ensembles may perform worse when all base classifiers are poorly performing, when there's high correlation between classifier errors, or when computational constraints outweigh marginal performance gains.
+ROC-AUC is calculated using each estimator's probability response, including
+averaged probabilities from the majority-vote estimator; hard classification
+predictions use classlabel voting. AUC and accuracy are different metrics and
+must not be compared as interchangeable percentages.
 
-### Bagging Analysis
+Scaling stays inside LR/KNN pipelines in every fold, including within the custom
+ensemble. Wine trees do not require scaling. UCI Wine attribution/licence is
+available at [UCI Wine](https://archive.ics.uci.edu/dataset/109/wine) (CC BY 4.0);
+packaged dataset DESCR fields include source details for Wine and Iris.
 
-**Number of Estimators Impact:**
-Through hyperparameter tuning, we found optimal performance with 200 estimators. Too few estimators lead to high variance and unstable predictions, while too many provide diminishing returns with increased computation.
+Wine boosting curves use an inner validation split from training data, avoiding
+the original minimum-test-error stopping choice. Full-Iris grid searches use
+five training folds. Their best_score_ values are labelled **selection CV**;
+a redundant post-selection CV re-run was removed. The 45 held-out Iris rows are
+evaluated after selection. Original search grids and estimator counts remain,
+with jobs bounded to one for portable local execution.
 
-**Bootstrap Sampling Benefits:**
-Bootstrap sampling creates diversity through random sampling with replacement, with optimal performance typically achieved at 80% sampling rate, providing the best bias-variance tradeoff.
+## Actual measured results
 
-**Overfitting Reduction Mechanism:**
-Bagging reduces overfitting by averaging out noisy predictions from individual trees, producing smoother and more generalized decision boundaries, and allowing different trees to make errors on different samples.
+Binary Iris (training-only ten-fold **ROC-AUC**, 70 rows):
 
-### AdaBoost Insights
+| Method | AUC mean ± std |
+|---|---:|
+| Logistic regression | 0.9167 ± 0.0913 |
+| Decision tree | 0.8792 ± 0.0708 |
+| KNN | 0.8875 ± 0.0987 |
+| Majority vote | 0.9667 ± 0.0408 |
 
-**Learning Rate Effects:**
-Lower learning rates (0.1) provide slow but stable convergence, medium rates (0.5) offer balanced performance, while higher rates (1.0) lead to faster but potentially unstable convergence.
+Full Iris (training-only ten-fold **accuracy**, 105 rows):
 
-**Test Error Increase Causes:**
-Test error sometimes increases after many iterations due to overfitting as the model starts fitting training noise, weight concentration on misclassified samples, and the need for early stopping around 150 iterations.
+| Method | Accuracy mean ± std |
+|---|---:|
+| Logistic regression | 0.9336 ± 0.0941 |
+| KNN | 0.9427 ± 0.0765 |
+| Decision tree | 0.9436 ± 0.0615 |
+| Random forest | 0.9436 ± 0.0842 |
+| Built-in voting | 0.9436 ± 0.0842 |
+| Bagging | 0.9436 ± 0.0842 |
+| AdaBoost | 0.9536 ± 0.0617 |
+| Custom majority vote | 0.9436 ± 0.0842 |
 
-**Decision Stump Advantages:**
-Decision stumps work well as base estimators because they are intentionally simple weak learners that allow boosting room for improvement, computationally efficient for many iterations, and easily interpretable.
+Five-fold selection chose AdaBoost learning_rate=0.1/n_estimators=50 (selection
+CV accuracy 0.9714), and bagging max_features=0.8/max_samples=0.5/n_estimators=200
+(selection CV accuracy 0.9524). On the **45 held-out full-Iris rows**, the decision
+tree baseline, tuned AdaBoost and tuned bagging all scored **0.9778 accuracy**.
+These selected-model scores are separate from the untuned ten-fold table above.
 
-### Comparative Performance
+Binary Wine (training-only five-fold **accuracy**, 95 rows; held-out 24 rows):
 
-**Iris Dataset Results:**
-AdaBoost achieved the highest performance (0.967), followed by Bagging (0.956), Voting Classifier (0.944), and individual Decision Tree (0.911).
+| Method | CV accuracy mean ± std | Held-out accuracy |
+|---|---:|---:|
+| Decision tree | 0.8211 ± 0.0714 | 0.8333 |
+| Bagging (500 trees) | 0.8737 ± 0.0788 | 0.9167 |
+| Decision stump | 0.8632 ± 0.0421 | 0.8750 |
+| AdaBoost (500, learning_rate=0.1) | 0.8842 ± 0.0774 | 0.9167 |
 
-**AdaBoost Superiority Reasons:**
-AdaBoost excelled on the Iris dataset due to clear decision boundaries that boosting can exploit, effective sequential learning handling misclassified samples, and decision stumps matching the dataset's relatively simple structure.
+All tables are specific to their stated data, features, split and metric. Fold
+standard deviations describe variability, not confidence intervals or statistical
+significance. No universal winner, guaranteed improvement, optimal 50–200 ensemble
+size, production-scale speed claim or general stopping rule follows from this lab.
 
-**Random Forest Relationship:**
-Random Forest extends bagging by adding random feature subsets, providing additional randomness that further reduces correlation between trees and generally outperforms basic bagging with decision trees.
+## Custom estimator
 
-**Method Selection Guidelines:**
-Bagging works best for high-variance models needing stability, boosting for high-bias models needing accuracy improvement, and voting for combining diverse, well-performing models.
+[majority_vote.py](majority_vote.py) contains the same custom implementation used
+by the notebook and offline tests. It provides:
 
-### Practical Considerations
+- Classifier tags and clone-compatible constructor parameters.
+- Dynamic nested parameters such as `classifier0__max_depth` for GridSearchCV.
+- LabelEncoder mapping back to original string/nonconsecutive labels.
+- Deterministic ties choosing the smallest encoded class.
+- Weighted classlabel/probability votes, validated finite nonnegative weights,
+  and probability-column alignment by each base estimator's classes_.
+- Feature-count checks and a clear unfitted-estimator error.
 
-**Computational Trade-offs:**
-Bagging has high but parallelizable computational costs, AdaBoost has medium sequential costs, while voting has low costs using independent pre-trained models.
+Eleven offline tests exercise these behaviours, including CV and nested grid
+search. See [REMEDIATION.md](REMEDIATION.md) for observed commands and limits.
 
-**Ensemble Size Impact:**
-Small ensembles suffer from higher variance and instability, while large ensembles provide lower variance but increased computation, with optimal size typically between 50-200 estimators determined through cross-validation.
-
-**Real-world Applications:**
-Bagging suits financial risk modeling and medical diagnosis, boosting excels in fraud detection and recommendation systems, while voting works well for competitions and critical decision systems.
-
-## Summary Report: Key Findings & Observations
-
-### Performance Improvements Achieved
-The lab demonstrated significant performance improvements across all ensemble methods. Majority voting provided 3-8% improvement over the best individual classifier, bagging achieved 5% improvement over single decision trees, and AdaBoost delivered 6% improvement with optimal tuning. All ensemble approaches consistently outperformed individual models.
-
-### Visualization Insights
-Decision boundary visualizations revealed that ensemble methods produce smoother, more robust boundaries compared to individual classifiers. Error convergence plots clearly showed optimal stopping points, particularly for boosting algorithms. Parameter sensitivity analysis demonstrated that learning rate and ensemble size significantly impact final performance.
-
-### Method-Specific Observations
-
-**Majority Voting** proved most effective when base classifiers have diverse strengths, is simple to implement with immediate performance gains, and works well even with moderately performing individual models.
-
-**Bagging** excelled at reducing variance in high-variance models like deep decision trees, with bootstrap sampling being crucial for creating model diversity. Performance typically plateaus after a sufficient number of estimators.
-
-**AdaBoost** showed the highest sensitivity to hyperparameter tuning, requires careful monitoring to prevent overfitting, but provides excellent sequential improvement of weak learners when properly configured.
-
-### Practical Implementation Lessons
-
-Parameter tuning emerged as critically important, particularly learning rate in AdaBoost and the number of estimators across all methods. Computational considerations vary significantly, with bagging offering better parallelization opportunities while AdaBoost's sequential nature limits parallelization. Dataset characteristics heavily influence method suitability, with boosting excelling on simpler datasets and bagging providing more stability on complex datasets.
-
-### Best Practices Identified
-
-The lab revealed several key best practices: always validate ensemble size through cross-validation, monitor validation error for early stopping in boosting, combine diverse models in voting ensembles for maximum benefit, use appropriate base estimators (weak learners for boosting, strong for voting), and carefully consider computational constraints when choosing ensemble methods.
-
-### Conclusion
-
-Ensemble methods demonstrated significant performance improvements over individual classifiers by leveraging collective decision-making. The "wisdom of crowds" principle proved effective across all implemented methods. Key takeaways include the crucial importance of ensemble diversity for performance gains, the necessity of proper tuning for optimal results, the influence of problem constraints and data characteristics on method choice, and the significant variation in computational costs between methods. The lab successfully demonstrated that ensemble learning provides robust, high-performance solutions suitable for real-world machine learning applications.
-
----
-*Lab implementation based on Chapter 7 of *Python Machine Learning* by Sebastian Raschka and Vahid Mirjalili*
+Based on Chapter 7 of Raschka and Mirjalili's *Python Machine Learning*.

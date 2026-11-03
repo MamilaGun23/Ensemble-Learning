@@ -1,0 +1,151 @@
+{
+  "seed": 1,
+  "binary_iris": {
+    "features": [
+      "sepal width",
+      "petal length"
+    ],
+    "classes": [
+      "versicolor",
+      "virginica"
+    ],
+    "train_samples": 70,
+    "test_samples": 30,
+    "folds": 10,
+    "metric": "ROC-AUC",
+    "results": [
+      {
+        "model": "Logistic Regression",
+        "cv_auc_mean": 0.9166666666666667,
+        "cv_auc_std": 0.09128709291752768
+      },
+      {
+        "model": "Decision Tree",
+        "cv_auc_mean": 0.8791666666666667,
+        "cv_auc_std": 0.07083333333333333
+      },
+      {
+        "model": "KNN",
+        "cv_auc_mean": 0.8875,
+        "cv_auc_std": 0.09868932735272509
+      },
+      {
+        "model": "Majority Vote",
+        "cv_auc_mean": 0.9666666666666666,
+        "cv_auc_std": 0.04082482904638631
+      }
+    ]
+  },
+  "full_iris": {
+    "features": [
+      "sepal length (cm)",
+      "sepal width (cm)",
+      "petal length (cm)",
+      "petal width (cm)"
+    ],
+    "train_samples": 105,
+    "test_samples": 45,
+    "folds": 10,
+    "metric": "accuracy",
+    "results": [
+      {
+        "Classifier": "Logistic Regression",
+        "Mean Accuracy": 0.9336363636363636,
+        "Std Accuracy": 0.0941293290027736
+      },
+      {
+        "Classifier": "KNN",
+        "Mean Accuracy": 0.9427272727272727,
+        "Std Accuracy": 0.07649879813240516
+      },
+      {
+        "Classifier": "Decision Tree",
+        "Mean Accuracy": 0.9436363636363637,
+        "Std Accuracy": 0.06149648918286458
+      },
+      {
+        "Classifier": "Random Forest",
+        "Mean Accuracy": 0.9436363636363637,
+        "Std Accuracy": 0.08418790474756527
+      },
+      {
+        "Classifier": "Voting Classifier",
+        "Mean Accuracy": 0.9436363636363637,
+        "Std Accuracy": 0.08418790474756527
+      },
+      {
+        "Classifier": "Bagging",
+        "Mean Accuracy": 0.9436363636363637,
+        "Std Accuracy": 0.08418790474756527
+      },
+      {
+        "Classifier": "AdaBoost",
+        "Mean Accuracy": 0.9536363636363637,
+        "Std Accuracy": 0.061717832990886096
+      },
+      {
+        "Classifier": "Majority Vote",
+        "Mean Accuracy": 0.9436363636363637,
+        "Std Accuracy": 0.08418790474756527
+      }
+    ],
+    "tuning": {
+      "adaboost_params": {
+        "learning_rate": 0.1,
+        "n_estimators": 50
+      },
+      "bagging_params": {
+        "max_features": 0.8,
+        "max_samples": 0.5,
+        "n_estimators": 200
+      },
+      "adaboost_selection_cv": 0.9714285714285713,
+      "bagging_selection_cv": 0.9523809523809523
+    },
+    "test_accuracy": {
+      "Decision Tree": 0.9777777777777777,
+      "AdaBoost tuned": 0.9777777777777777,
+      "Bagging tuned": 0.9777777777777777
+    }
+  },
+  "binary_wine": {
+    "features": [
+      "alcohol",
+      "od280/od315_of_diluted_wines"
+    ],
+    "original_classes": [
+      2,
+      3
+    ],
+    "train_samples": 95,
+    "test_samples": 24,
+    "folds": 5,
+    "metric": "accuracy",
+    "results": [
+      {
+        "model": "Decision Tree",
+        "cv_accuracy_mean": 0.8210526315789475,
+        "cv_accuracy_std": 0.07139294719079228,
+        "test_accuracy": 0.8333333333333334
+      },
+      {
+        "model": "Bagging (500)",
+        "cv_accuracy_mean": 0.873684210526316,
+        "cv_accuracy_std": 0.07877173445839876,
+        "test_accuracy": 0.9166666666666666
+      },
+      {
+        "model": "Decision Stump",
+        "cv_accuracy_mean": 0.8631578947368421,
+        "cv_accuracy_std": 0.042105263157894736,
+        "test_accuracy": 0.875
+      },
+      {
+        "model": "AdaBoost (500, lr=0.1)",
+        "cv_accuracy_mean": 0.8842105263157893,
+        "cv_accuracy_std": 0.0773523076668372,
+        "test_accuracy": 0.9166666666666666
+      }
+    ]
+  }
+}
